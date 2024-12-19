@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG_with_roberta Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #8B0000;  /* Dark red background */
+            color: white;  /* White text */
+            font-size: 22px;  /* Font size 22px */
+        }
+
+        h1 {
+            font-weight: bold;
+        }
+
+        #chat-container {
+            width: 60%;  /* Less wide for chat history */
+            max-height: 70%;
+            overflow-y: auto;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #5A0000;  /* Slightly lighter red for the chat container */
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            max-width: 70%;
+            display: inline-block;
+        }
+
+        .user-message {
+            background-color: #B22222;  /* Darker red for user message */
+            align-self: flex-end;
+        }
+
+        .roberta-message {
+            background-color: #D3D3D3;  /* Light grey for Roberta message */
+            color: black;  /* Roberta text color */
+            align-self: flex-start;
+        }
+
+        .input-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        textarea {
+            width: 50%;  /* Less wide for query input */
+            height: 40px;
+            font-size: 22px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #DCDCDC;  /* Light grey background for input */
+            color: black;  /* Text color for input */
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 22px;
+            margin-left: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background-color: #B22222;  /* Dark red background for button */
+            color: white;  /* White button text */
+        }
+
+        button:hover {
+            background-color: #A11D1D;  /* Darker red on hover */
+        }
+
+    </style>
+</head>
+<body>
+    <h1>RAG with Roberta</h1>
+    <div id="chat-container">
+        {% for chat in chat_history %}
+            <div class="message user-message"><strong>You:</strong> {{ chat.question }}</div>
+            <div class="message roberta-message"><strong>Roberta:</strong> {{ chat.answer }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="input-container">
+        <textarea id="question" placeholder="Enter your question..."></textarea>
+        <button onclick="sendQuery()">Send</button>
+    </div>
+
+    <script>
+        async function sendQuery() {
+            const question = document.getElementById("question").value;
+            const chatContainer = document.getElementById("chat-container");
+            const responseDiv = document.createElement("div");
+
+            // Display user query
+            const userMessage = document.createElement("div");
+            userMessage.classList.add("message", "user-message");
+            userMessage.innerHTML = `<strong>You:</strong> ${question}`;
+            chatContainer.appendChild(userMessage);
+
+            // Scroll to bottom of chat
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Clear input field
+            document.getElementById("question").value = "";
+
+            // Fetch the response from the server
+            const response = await fetch("/query", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: question }),
+            });
+            const data = await response.json();
+
+            // Display Roberta response
+            const robertaMessage = document.createElement("div");
+            robertaMessage.classList.add("message", "roberta-message");
+            robertaMessage.innerHTML = `<strong>Roberta:</strong> ${data.answer}`;
+            chatContainer.appendChild(robertaMessage);
+
+            // Scroll to bottom of chat
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>
